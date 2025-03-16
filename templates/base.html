@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+    <title>Real-Time Car Counter</title>
+    <style>
+        .container {
+            display: flex;
+            height: 400vh;
+        }
+        .left{
+            flex: 1;
+            background-color: #f0f0f0;
+            padding: 20px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;   /* Added */       
+            justify-content: space-between; /* Optional: pushes top/bottom apart */
+        }
+        .right{flex: 1;
+            background-color: #e0e0e0;
+            padding: 20px;
+            text-align: center;
+
+        }
+       
+        img.video-feed {
+            width: 100%;
+            height: auto;
+        }
+        img.chart {
+            width: 100%;
+            height: auto;
+        }
+
+    </style>
+</head>
+<body>
+    
+    <div class="container">
+
+         <div class="left"> 
+
+            <div>                        
+                <h1>Video Feed with Zone</h1>
+                <img src="{% url 'stream_region' %}" alt="Video Feed counting line" width="640" height="480">
+            
+            </div>     
+         </div>
+
+         <div class="right">
+            <div>
+                
+                <h2>Car Counting Chart</h2>
+                <img src="{% url 'chart2' %}" alt="Car Counting Chart1" width="600" height="800">
+
+                <h3>Car Counting Chart</h3>
+                <img src="{% url 'chart1' %}" alt="Car Counting Chart2" width="600" height="800">
+            
+            </div>
+         </div>
+    </div>
+</body>
+</html>
