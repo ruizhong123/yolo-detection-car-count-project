@@ -21,7 +21,11 @@
             background-color: #e0e0e0;
             padding: 20px;
             text-align: center;
+            font-size:20px;
 
+        }
+        .big-title{
+            font-size:30px;
         }
        
         img.video-feed {
@@ -42,7 +46,7 @@
          <div class="left"> 
 
             <div>                        
-                <h1>Video Feed with Zone</h1>
+                <h1 class='.big-title'> Video Stream </h1>
                 <img src="{% url 'stream_region' %}" alt="Video Feed counting line" width="640" height="480">
             
             </div>     
@@ -51,10 +55,10 @@
          <div class="right">
             <div>
                 
-                <h2>Car Counting Chart</h2>
+                <h2 class = 'big-title'> Record car counts  per minute </h2>
                 <img src="{% url 'chart2' %}" alt="Car Counting Chart1" width="600" height="800">
 
-                <h3>Car Counting Chart</h3>
+                <h3 class = 'big-title'> Record car counts with hour </h3>
                 <img src="{% url 'chart1' %}" alt="Car Counting Chart2" width="600" height="800">
             
             </div>
