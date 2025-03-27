@@ -107,22 +107,51 @@ class objectdetection_countingregion:
             
             # Store counting data
             currenttime = time.time()
+            
             with self.lock:
-                if current_hour < timezone.localtime().hour:
-                    self.linecount1.append(int(self.linezone.in_count))
-                    self.linecount2.append(int(self.linezone.out_count))
-                    self.date.append(timezone.localtime().strftime("%H:%M:%S"))
-                    self.linezone = sv.LineZone(self.initial_point, self.end_point)
-                    current_hour = timezone.localtime().hour
-                elif timezone.localtime().hour == 23 & timezone.localtime().minute > 0 & timezone.localtime().second > 0 :
+                
+                if timezone.localtime().hour < current_hour and timezone.localtime().minute >= 0 and timezone.localtime().second >= 0:
                     
                     self.linecount1.append(int(self.linezone.in_count))
                     self.linecount2.append(int(self.linezone.out_count))
+                    
                     self.date.append(timezone.localtime().strftime('%H:%M:%S'))
+                    
                     self.linezone = sv.LineZone(self.initial_point, self.end_point)
                     current_hour = timezone.localtime().hour
                 
-                if currenttime - last_update_time >= 600 or (timezone.localtime().hour == 24 & timezone.localtime().minute>0 &timezone.localtime().second > 0):
+                
+                elif current_hour < timezone.localtime().hour and timezone.localtime().hour > 0 :
+                    
+                    if timezone.localtime().hour == 0 and  timezone.localtime().minute >= 0 and timezone.localtime().second >=0 :
+                        
+                        self.linecount1.clear()
+                        self.linecount2.clear()
+                        self.date.clear()
+                    
+                    self.linecount1.append(int(self.linezone.in_count))
+                    self.linecount2.append(int(self.linezone.out_count))
+                    
+                    self.date.append(timezone.localtime().strftime("%H:%M:%S"))
+                    
+                    self.linezone = sv.LineZone(self.initial_point, self.end_point)               
+                    current_hour = timezone.localtime().hour
+                    
+     
+                if timezone.localtime().minute == 0 and timezone.localtime().second == 0:
+                        
+                        self.datetime.clear()
+                        self.polygon1count.clear()
+                        self.polygon2count.clear()
+                        self.polygon1count.append(int(self.polygonzone1.current_count))
+                        self.polygon2count.append(int(self.polygonzone2.current_count))
+                        self.datetime.append(timezone.localtime().strftime("%H:%M:%S"))
+                        
+                        self.last_update_time = currenttime
+                        self.last_append_time = currenttime
+                
+                elif currenttime - last_update_time >= 3600 :
+                    
                     self.datetime.clear()
                     self.polygon1count.clear()
                     self.polygon2count.clear()
@@ -131,7 +160,8 @@ class objectdetection_countingregion:
                     self.datetime.append(timezone.localtime().strftime("%H:%M:%S"))
                     last_update_time = currenttime
                     last_append_time = currenttime
-                elif currenttime - last_append_time >= 60 :
+                    
+                elif currenttime - last_append_time >= 360 :
                     self.polygon1count.append(int(self.polygonzone1.current_count))
                     self.polygon2count.append(int(self.polygonzone2.current_count))
                     self.datetime.append(timezone.localtime().strftime("%H:%M:%S"))

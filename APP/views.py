@@ -12,12 +12,12 @@ import time
 model = YOLO('yolo12n.pt')
 
 # Line zone
-initial_point = sv.Point(0, 120)
-end_point = sv.Point(300, 120)
+initial_point = sv.Point(70, 170)
+end_point = sv.Point(320, 170)
 
 # Polygon zones
-polygon1 = np.array([[45, 240], [352, 235], [100, 100], [15, 100]])
-polygon2 = np.array([[350, 220], [350, 120], [200, 90], [110, 100]])
+polygon1 = np.array([[100, 240], [325, 240], [170, 150], [80, 150]])
+polygon2 = np.array([[330, 240], [352, 175], [270, 150], [180, 150]])
 
 # Initialize counter
 CAMERA_URL = 'https://cctvn.freeway.gov.tw/abs2mjpg/bmjpg?camera=13380'
