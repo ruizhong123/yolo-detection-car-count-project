@@ -1,71 +1,128 @@
 <!DOCTYPE html>
-
 <html>
 <head>
-    <title>Real-Time Car Counter</title>
+    <title>Video Streaming & Visualization</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         .container {
             display: flex;
-            height: 400vh;
+            gap: 20px;
         }
-        .left{
+        .left_column {
             flex: 1;
-            background-color: #f0f0f0;
-            padding: 20px;
-            text-align: center;
-            display: flex;
-            flex-direction: column;   /* Added */       
-            justify-content: space-between; /* Optional: pushes top/bottom apart */
         }
-        .right{flex: 1;
-            background-color: #e0e0e0;
-            padding: 20px;
-            text-align: center;
-            font-size:20px;
-
+        .right_column {
+            flex: 1;
         }
-        .big-title{
-            font-size:30px;
+        canvas {
+            width: 100% !important;
+            margin-bottom: 20px;
         }
-       
-        img.video-feed {
-            width: 100%;
+        img {
+            max-width: 100%;
             height: auto;
         }
-        img.chart {
-            width: 100%;
-            height: auto;
-        }
-
     </style>
 </head>
 <body>
-    
     <div class="container">
-
-         <div class="left"> 
-
-            <div>                        
-                <h1 class='.big-title'> Video Stream </h1>
-                <img src="{% url 'stream_region' %}" alt="Video Feed counting line" width="640" height="480">
-            
-            </div>     
-         </div>
-
-         <div class="right">
-            <div>
-                
-                <h2 class = 'big-title'> Record car counts  per six minute </h2>
-                <img src="{% url 'chart2' %}" alt="Car Counting Chart1" width="600" height="800">
-
-                <h3 class = 'big-title'> Record car counts with hour </h3>
-                <img src="{% url 'chart1' %}" alt="Car Counting Chart2" width="600" height="800">
-            
-            </div>
-         </div>
+        <div class="left_column">
+            <h1>Live Video Stream</h1>
+            <img src="{% url 'stream_video_counting_region' %}" width="640" height="480" />
+        </div>
+        <div class="right_column">
+            <h2>Line Zone Counts for left</h2>
+            <canvas id="ins_car_barChart_l" width="300" height="200"></canvas>
+            <h3>Line Zone Counts for right</h3>
+            <canvas id="ins_car_barChart_r" width="300" height="200"></canvas>
+            <h4>Polygon Zone Counts for left</h4>
+            <canvas id="cul_car_barchart_l" width="300" height="200"></canvas>
+            <h5>Polygon Zone Counts for right</h5>
+            <canvas id="cul_car_barchart_r" width="300" height="200"></canvas>
+        </div>
     </div>
+
+    <script>
+        // Define your custom update interval here (in milliseconds)
+
+        // Instant bar charts
+        const ins_barCtx_left = document.getElementById('ins_car_barChart_l').getContext('2d');
+        const ins_barCtx_right = document.getElementById('ins_car_barChart_r').getContext('2d');
+
+        const ins_barChart_l = new Chart(ins_barCtx_left, {
+            type: 'bar',
+            data: {
+                labels: [],
+                datasets: [{ label: 'Left Road', data: [], backgroundColor: 'blue' }]
+            },
+            options: { scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+        });
+
+        const ins_barChart_r = new Chart(ins_barCtx_right, {
+            type: 'bar',
+            data: {
+                labels: [],
+                datasets: [{ label: 'Right Road', data: [], backgroundColor: 'red' }]
+            },
+            options: { scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+        });
+
+        // Cumulative bar charts
+        const cul_barCtx_left = document.getElementById('cul_car_barchart_l').getContext('2d');
+        const cul_barCtx_right = document.getElementById('cul_car_barchart_r').getContext('2d');
+
+        const cul_barchart_l = new Chart(cul_barCtx_left, {
+            type: 'bar',
+            data: {
+                labels: [],
+                datasets: [{ label: 'Left Road', data: [], backgroundColor: 'blue' }]
+            },
+            options: { scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+        });
+
+        const cul_barchart_r = new Chart(cul_barCtx_right, {
+            type: 'bar',
+            data: {
+                labels: [],
+                datasets: [{ label: 'Right Road', data: [], backgroundColor: 'red' }]
+            },
+            options: { scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+        });
+
+        // Function to fetch and update chart data
+        function updateCharts() {
+            fetch("{% url 'get_chart_data' %}")
+                .then(response => response.json())
+                .then(data => {
+                    console.log(data);
+                    // Instant car count left road
+                    ins_barChart_l.data.labels = data.datetime;
+                    ins_barChart_l.data.datasets[0].data = data.polygon1count;
+                    ins_barChart_l.update();
+
+                    // Instant car count right road
+                    ins_barChart_r.data.labels = data.datetime;
+                    ins_barChart_r.data.datasets[0].data = data.polygon2count;
+                    ins_barChart_r.update();
+
+                    // Cumulative car count
+                    cul_barchart_l.data.labels = data.dates;
+                    cul_barchart_l.data.datasets[0].data = data.linecount1;
+                    cul_barchart_l.update();
+
+                    cul_barchart_r.data.labels = data.dates;
+                    cul_barchart_r.data.datasets[0].data = data.linecount2;
+                    cul_barchart_r.update();
+                })
+                .catch(error => console.error('Error fetching data:', error));
+        }
+
+        // Set the interval to your custom time
+        setInterval(updateCharts);
+
+       
+    </script>
 </body>
 </html>
-
 
 

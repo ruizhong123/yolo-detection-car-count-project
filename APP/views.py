@@ -45,37 +45,22 @@ def stream_video_counting_region(request):
         content_type="multipart/x-mixed-replace; boundary=frame"
     )
     
-@gzip_page
-def get_bar_plot(request):
-    """Get the bar plot of the counting region"""
-    def generate():
-        while True:
-            plot1, _ = counter.get_chart()
-            yield (b'--frame\r\n'
-                   b'Content-Type: image/png\r\n\r\n' + 
-                   base64.b64decode(plot1) +
-                   b'\r\n')
-            time.sleep(2)  # Update every 2s to reduce load
-    return StreamingHttpResponse(
-        generate(),
-        content_type="multipart/x-mixed-replace; boundary=frame"
-    )
+    
 
-@gzip_page
-def get_line_plot(request):
-    """Get the line plot of the counting region"""
-    def generate():
-        while True:
-            _, plot2 = counter.get_chart()
-            yield (b'--frame\r\n'
-                   b'Content-Type: image/png\r\n\r\n' + 
-                   base64.b64decode(plot2) +
-                   b'\r\n')
-            time.sleep(2)  # Update every 2s
-    return StreamingHttpResponse(
-        generate(),
-        content_type="multipart/x-mixed-replace; boundary=frame"
-    )
+    
+from django.http import JsonResponse
+
+def get_chart_data(request):
+    with counter.lock:  # Ensure thread safety
+        data = {
+            "dates": list(counter.date),
+            "linecount1": list(counter.linecount1),
+            "linecount2": list(counter.linecount2),
+            "datetime": list(counter.datetime),
+            "polygon1count": list(counter.polygon1count),
+            "polygon2count": list(counter.polygon2count),
+        }
+    return JsonResponse(data)
 
 @gzip_page
 def main_view(request):
