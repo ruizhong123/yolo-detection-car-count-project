@@ -1,9 +1,7 @@
 from ultralytics import YOLO
 from django.utils import timezone
 import matplotlib.pyplot as plt 
-from matplotlib.ticker import MaxNLocator
 import supervision as sv
-
 from io import BytesIO
 import numpy as np
 import threading
@@ -99,15 +97,14 @@ class objectdetection_countingregion:
             annoimg = self.poly2_annotator.annotate(annoimg)
             annoimg = bounding_box_annotator.annotate(annoimg,detections=detections)
             
-            # Store frame
+            
             with self.lock:
                 self.annoimg = annoimg
-                try:
-                    if not self.frame_queue.empty():
-                        self.frame_queue.get_nowait()
-                    self.frame_queue.put(annoimg.copy())
-                except queue.Full:
-                    pass
+                if self.frame_queue.full():
+                    self.frame_queue.get()
+                self.frame_queue.put(annoimg.copy())
+            
+
             
             # Store counting data
             currenttime = time.time()
@@ -153,18 +150,6 @@ class objectdetection_countingregion:
                         
                         self.last_update_time = currenttime
                         self.last_append_time = currenttime
-                
-                elif currenttime - last_update_time >= 3600 :
-                    
-                    self.datetime.clear()
-                    self.polygon1count.clear()
-                    self.polygon2count.clear()
-                    self.polygon1count.append(int(self.polygonzone1.current_count))
-                    self.polygon2count.append(int(self.polygonzone2.current_count))
-                    self.datetime.append(timezone.localtime().strftime("%H:%M:%S"))
-                    last_update_time = currenttime
-                    last_append_time = currenttime
-                    
                 elif currenttime - last_append_time >= 360 :
                     self.polygon1count.append(int(self.polygonzone1.current_count))
                     self.polygon2count.append(int(self.polygonzone2.current_count))
