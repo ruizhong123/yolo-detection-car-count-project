@@ -26,9 +26,12 @@
 </head>
 <body>
     <div class="container">
+        
         <div class="left_column">
+            
             <h1>Live Video Stream</h1>
-            <img src="{% url 'stream_video_counting_region' %}" width="640" height="480" />
+            <img id="video" width="640" height="480" />
+        
         </div>
         <div class="right_column">
             <h2>Line Zone Counts for left</h2>
@@ -44,6 +47,31 @@
     </div>
 
     <script>
+
+        // create video streaming 
+
+        const video = document.getElementById('video');
+        
+        // use streaming endpoint directionly
+        const stream_url = "{% url 'stream_video' %}";
+
+        // fetch video stream and present 
+
+        video.src =  stream_url;
+
+        // make the annotation on the video stream 
+
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
         // Define your custom update interval here (in milliseconds)
 
         // Instant bar charts
@@ -119,11 +147,9 @@
         }
 
         // Set the interval to your custom time
-        setInterval(updateCharts);
-
+        setInterval(updateCharts,5000); // goal is to wait data to load 
        
     </script>
 </body>
 </html>
-
 
