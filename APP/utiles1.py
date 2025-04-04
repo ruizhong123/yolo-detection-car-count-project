@@ -69,6 +69,7 @@ class objectdetection_countingregion:
         while self.running:
             ret, frame = self.cap.read()
             if not ret:
+                
                 self.cap = cv2.VideoCapture(self.url)
                 ret, frame = self.cap.read()
                 continue
@@ -78,6 +79,7 @@ class objectdetection_countingregion:
             # YOLO prediction
             time.sleep(0.1)
             anno_img = self.model.predict(frame)[0]  # Suppress logs
+            
             detections = sv.Detections(
                 xyxy=anno_img.boxes.xyxy.cpu().numpy(),
                 confidence=anno_img.boxes.conf.cpu().numpy(),

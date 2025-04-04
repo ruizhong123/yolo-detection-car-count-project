@@ -5,6 +5,7 @@ from . import utiles1
 from ultralytics import YOLO
 import supervision as sv
 import numpy as np
+import cv2
 import base64
 import time 
 
@@ -24,28 +25,36 @@ CAMERA_URL = 'https://cctvn.freeway.gov.tw/abs2mjpg/bmjpg?camera=13380'
 counter = utiles1.objectdetection_countingregion(CAMERA_URL, model, initial_point, end_point, polygon1, polygon2)
 
 @gzip_page
-def stream_video_counting_region(request):
+def stream_video(request):
     """Stream video with region counting functionality"""
     def generate():
-        last_time = time.time()
+        
+        cap = cv2.VideoCapture(CAMERA_URL)
+        
         while True:
-            frame = counter.get_annotated_frame_counting_region()
-            if frame:
-                yield (b'--frame\r\n'
-                       b'Content-Type: image/jpeg\r\n\r\n' + 
-                       frame + 
-                       b'\r\n')
-            # Dynamic delay for ~20 FPS
-            elapsed = time.time() - last_time
-            delay = max(0, 0.05 - elapsed)  # 0.05s = 20 FPS
-            time.sleep(delay)
-            last_time = time.time()
+            
+            ret,frame = cap.read()
+
+            if not ret :
+                
+                cap.release()
+                cap = cv2.VideoCapture(CAMERA_URL)
+                ret,frame = cap.read()
+                
+                
+            ret,buffer = cv2.imencode('.jpg',frame)
+            trans_frame= buffer.tobytes()
+            
+            yield (b'--frame\r\n'
+                   b'Content-Type: image/jpeg\r\n\r\n' + 
+                   trans_frame + 
+                   b'\r\n')
+                
     return StreamingHttpResponse(
         generate(),
         content_type="multipart/x-mixed-replace; boundary=frame"
     )
-    
-    
+
 
     
 from django.http import JsonResponse
