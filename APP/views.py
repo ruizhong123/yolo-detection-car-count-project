@@ -5,6 +5,7 @@ from . import utiles1
 from ultralytics import YOLO
 import supervision as sv
 import numpy as np
+import json
 import cv2
 import base64
 import time 
@@ -54,13 +55,32 @@ def stream_video(request):
         generate(),
         content_type="multipart/x-mixed-replace; boundary=frame"
     )
+    
+# make the object of annotation 
 
+def annotate(request):
+    def generate():
+        try:
+            while True:
 
+                detection = {"xyxy" : counter.xyxy.tolist(),
+                             "confidence" : counter.confidence.tolist(),
+                             "class_id" : counter.class_id.tolist()
+                             }
+
+                yield f'data : {json.dumps(detection)}\n\n' # becausse the data can be changed over time, so we need to use json.dumps to convert the data that can be dumped with json format
+
+        except Exception as e : 
+            print("Error in annotate:",e)
+    
+    return StreamingHttpResponse(generate(), content_type="text/event-stream")
+        
     
 from django.http import JsonResponse
 
 def get_chart_data(request):
     with counter.lock:  # Ensure thread safety
+        
         data = {
             "dates": list(counter.date),
             "linecount1": list(counter.linecount1),
@@ -69,6 +89,8 @@ def get_chart_data(request):
             "polygon1count": list(counter.polygon1count),
             "polygon2count": list(counter.polygon2count),
         }
+        
+        
     return JsonResponse(data)
 
 @gzip_page
