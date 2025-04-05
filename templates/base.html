@@ -30,7 +30,11 @@
         <div class="left_column">
             
             <h1>Live Video Stream</h1>
-            <img id="video" width="640" height="480" />
+            <img id="video" width="640" height="480"> 
+
+            <h2> load anntating image </h2>
+            <canvas id="testing_annotated_image" width="1000" height="600"></canvas>
+
         
         </div>
         <div class="right_column">
@@ -61,15 +65,41 @@
 
         // make the annotation on the video stream 
 
+        const canvas = document.getElementById('testing_annotated_image');
+        const ctx = canvas.getContext('2d');
+
+        // create image object 
+
+        const image = new Image();
+        image.src = stream_url;
+
+
+
+
+        // load annotation from  
+
+        const annotation_url = "{% url 'annotate' %}";
+
+
+
+
+        // when the image is loaded ,draw the image on the canvas 
+
+        image.onload = function drawFrame() {
+            ctx.drawImage(image,0,0,canvas.width,canvas.height);
+            requestAnimationFrame(drawFrame);
+        };
         
         
+      
         
-        
-        
-        
-        
-        
-        
+
+
+
+
+
+
+
         
         
         // Define your custom update interval here (in milliseconds)

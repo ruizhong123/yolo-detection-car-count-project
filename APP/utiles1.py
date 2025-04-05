@@ -80,10 +80,14 @@ class objectdetection_countingregion:
             time.sleep(0.1)
             anno_img = self.model.predict(frame)[0]  # Suppress logs
             
+            self.xyxy=anno_img.boxes.xyxy.cpu().numpy()
+            self.confidence=anno_img.boxes.conf.cpu().numpy()
+            self.class_id=anno_img.boxes.cls.cpu().numpy().astype(int)
+            
             detections = sv.Detections(
-                xyxy=anno_img.boxes.xyxy.cpu().numpy(),
-                confidence=anno_img.boxes.conf.cpu().numpy(),
-                class_id=anno_img.boxes.cls.cpu().numpy().astype(int)
+                xyxy = self.xyxy,
+                confidence = self.confidence,
+                class_id=self.class_id
             )
             bounding_box_annotator = sv.BoundingBoxAnnotator()
             # Update tracker and zones
