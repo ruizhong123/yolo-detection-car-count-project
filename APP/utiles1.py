@@ -21,9 +21,15 @@ class objectdetection_countingregion:
         self.model = model
         
         
+        # set the defulat data
+         
         self.frame = None
         self.annoimg = None
         
+        self.xyxy = np.array([],dtype=np.float32).reshape(0,4)
+        self.confidence = np.array([],dtype=np.float32)
+        self.class_id = np.array([],dtype=np.int32)
+                
         
         # Data collection
         self.date = deque(maxlen=50)
@@ -74,7 +80,6 @@ class objectdetection_countingregion:
                 ret, frame = self.cap.read()
                 continue
             
-       
             
             # YOLO prediction
             time.sleep(0.1)

@@ -32,6 +32,22 @@ def stream_video(request):
         
         cap = cv2.VideoCapture(CAMERA_URL)
         
+        # Check if the video stream opened successfully
+        if not cap.isOpened():
+            print(f"Error: Could not open video stream from {CAMERA_URL}")
+            return
+        
+        # Get the video resolution
+        width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+        height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        
+        # Print the resolution to the console
+        if width == 0 or height == 0:
+            print("Error: Could not retrieve video resolution. Stream might be unavailable.")
+        else:
+            print(f"Video resolution: {width}x{height}")
+        
+        
         while True:
             
             ret,frame = cap.read()
@@ -55,20 +71,24 @@ def stream_video(request):
         generate(),
         content_type="multipart/x-mixed-replace; boundary=frame"
     )
-    
+
+
 # make the object of annotation 
 
 def annotate(request):
     def generate():
         try:
             while True:
-
-                detection = {"xyxy" : counter.xyxy.tolist(),
-                             "confidence" : counter.confidence.tolist(),
-                             "class_id" : counter.class_id.tolist()
-                             }
-
-                yield f'data : {json.dumps(detection)}\n\n' # becausse the data can be changed over time, so we need to use json.dumps to convert the data that can be dumped with json format
+                
+                with counter.lock:
+                    detection = {"xyxy" : counter.xyxy.tolist(),
+                                 "confidence" : counter.confidence.tolist(),
+                                 "class_id" : counter.class_id.tolist()
+                                 }
+                    
+                    time.sleep(0.01)
+                    
+                    yield f'data:{json.dumps(detection)}\n\n' # becausse the data can be changed over time, so we need to use json.dumps to convert the data that can be dumped with json format
 
         except Exception as e : 
             print("Error in annotate:",e)
@@ -89,6 +109,7 @@ def get_chart_data(request):
             "polygon1count": list(counter.polygon1count),
             "polygon2count": list(counter.polygon2count),
         }
+        time.sleep(0.015)
         
         
     return JsonResponse(data)
