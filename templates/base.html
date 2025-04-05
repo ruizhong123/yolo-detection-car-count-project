@@ -14,13 +14,18 @@
         .right_column {
             flex: 1;
         }
+        
         canvas {
             width: 100% !important;
+            max-width: 1000px;
+            height: auto;
             margin-bottom: 20px;
+            border: 1px solid #ccc;
         }
         img {
             max-width: 100%;
             height: auto;
+            border: 1px solid #ccc;
         }
     </style>
 </head>
@@ -32,19 +37,25 @@
             <h1>Live Video Stream</h1>
             <img id="video" width="640" height="480"> 
 
-            <h2> load anntating image </h2>
-            <canvas id="testing_annotated_image" width="1000" height="600"></canvas>
+            <h2> canvas formst video streaming  </h2>
+            <canvas id="canvas_format_image" width="1000" height="600"></canvas>
+
+            <h3> annotate box and class on video streaming </h3>
+            
+            <canvas id="annotated_image_on_canvas_format" width="1000" height="600"></canvas>
+
+
 
         
         </div>
         <div class="right_column">
-            <h2>Line Zone Counts for left</h2>
+            <h1>Line Zone Counts for left</h1>
             <canvas id="ins_car_barChart_l" width="300" height="200"></canvas>
-            <h3>Line Zone Counts for right</h3>
+            <h2>Line Zone Counts for right</h2>
             <canvas id="ins_car_barChart_r" width="300" height="200"></canvas>
-            <h4>Polygon Zone Counts for left</h4>
+            <h3>Polygon Zone Counts for left</h3>
             <canvas id="cul_car_barchart_l" width="300" height="200"></canvas>
-            <h5>Polygon Zone Counts for right</h5>
+            <h4>Polygon Zone Counts for right</h4>
             <canvas id="cul_car_barchart_r" width="300" height="200"></canvas>
         
         </div>
@@ -63,44 +74,94 @@
 
         video.src =  stream_url;
 
-        // make the annotation on the video stream 
 
-        const canvas = document.getElementById('testing_annotated_image');
-        const ctx = canvas.getContext('2d');
+
+
+
+
+        // make video streaming with canvas format  
+
+        const canvas1 = document.getElementById('canvas_format_image');
+        const ctx1 = canvas1.getContext('2d');
 
         // create image object 
 
-        const image = new Image();
-        image.src = stream_url;
+        const image1 = new Image();
+        image1.src = stream_url;
+
+            // when the image is loaded ,draw the image on the canvas 
+
+        image1.onload = function drawFrame() {
+            ctx1.drawImage(video,0,0,canvas1.width,canvas1.height);
+            requestAnimationFrame(drawFrame);
+        };
 
 
 
+
+        // create canvas for annotatation 
+
+        const canvas2 = document.getElementById('annotated_image_on_canvas_format');
+
+        const ctx2 = canvas2.getContext('2d');
+
+
+        // create scale for box
+        
+        
+        const VIDEO_WIDTH = 352;
+        const VIDEO_HEIGHT = 240;
+
+        const scalex = canvas2.width / VIDEO_WIDTH;
+        const scaley = canvas2.height / VIDEO_HEIGHT;
+
+
+
+        // create image object
+        const image2 = new Image();
+        image2.src = stream_url;
 
         // load annotation from  
 
         const annotation_url = "{% url 'annotate' %}";
+        const eventSource = new EventSource(annotation_url);
+        
+
+        // the message event is used to receive the data from the server 
+
+        image2.onload = function drawFrame() {
+            
+            eventSource.onmessage = function(event) { 
+
+                const data = JSON.parse(event.data);
+
+                ctx2.drawImage(image2,0,0,canvas2.width,canvas2.height);
+
+                const boxes = data.xyxy;
+
+                boxes.forEach((boxes) => {
+
+                    const [x1,y1,x2,y2] = boxes;
 
 
+                    const scale_x1 = x1*scalex;
+                    const scale_y1 = y1*scaley;
+                    const scale_x2 = x2*scalex;
+                    const scale_y2 = y2*scaley; 
 
 
-        // when the image is loaded ,draw the image on the canvas 
-
-        image.onload = function drawFrame() {
-            ctx.drawImage(image,0,0,canvas.width,canvas.height);
+                    ctx2.beginPath();
+                    ctx2.rect(scale_x1,scale_y1,scale_x2-scale_x1,scale_y2-scale_y1);
+                    ctx2.lineWidth = 2;
+                    ctx2.strokeStyle = 'red';
+                    ctx2.stroke();
+                
+                });
+    };
             requestAnimationFrame(drawFrame);
-        };
+            };
         
-        
-      
-        
-
-
-
-
-
-
-
-        
+    
         
         // Define your custom update interval here (in milliseconds)
 
