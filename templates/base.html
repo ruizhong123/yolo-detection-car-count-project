@@ -100,7 +100,7 @@
             console.error('Failed to load stream');
         };
 
-        // Fetch detection data
+        // Fetch detection data and 
         function fetchDetectionData() {
             fetch("{% url 'get_data' %}")
                 .then(response => response.json())
@@ -112,12 +112,6 @@
 
         setInterval(fetchDetectionData, 500);
 
-
-
-
-
-        
-    
         
         // Define your custom update interval here (in milliseconds)
 

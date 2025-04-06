@@ -109,9 +109,6 @@ class objectdetection_countingregion:
                 class_id=self.class_id
             )
             
-            
-            
-
             # Update tracker and zones
             self.tracker.update_with_detections(detections)
             self.linezone.trigger(detections=detections)

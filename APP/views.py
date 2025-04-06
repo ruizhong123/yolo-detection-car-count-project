@@ -27,7 +27,8 @@ CAMERA_URL = 'https://cctvn.freeway.gov.tw/abs2mjpg/bmjpg?camera=13380'
 counter = utiles1.objectdetection_countingregion(CAMERA_URL, model, initial_point, end_point, polygon1, polygon2)
 
 @gzip_page
-def stream_video(request):
+
+async def stream_video(request):
     
     """Stream video with region counting functionality"""
     
@@ -65,7 +66,7 @@ def stream_video(request):
     
 from django.http import JsonResponse
 
-def get_chart_data(request):
+async def get_chart_data(request):
     with counter.lock:  # Ensure thread safety
         
         data = {
