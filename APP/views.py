@@ -5,6 +5,7 @@ from . import utiles1
 from ultralytics import YOLO
 import supervision as sv
 import numpy as np
+
 import json
 import cv2
 import base64
@@ -27,73 +28,39 @@ counter = utiles1.objectdetection_countingregion(CAMERA_URL, model, initial_poin
 
 @gzip_page
 def stream_video(request):
+    
     """Stream video with region counting functionality"""
-    def generate():
-        
-        cap = cv2.VideoCapture(CAMERA_URL)
-        
-        # Check if the video stream opened successfully
-        if not cap.isOpened():
-            print(f"Error: Could not open video stream from {CAMERA_URL}")
-            return
-        
-        # Get the video resolution
-        width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-        height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-        
-        # Print the resolution to the console
-        if width == 0 or height == 0:
-            print("Error: Could not retrieve video resolution. Stream might be unavailable.")
-        else:
-            print(f"Video resolution: {width}x{height}")
-        
+    
+    def generate(): 
         
         while True:
+            with counter.lock:
+                if counter.frame is None:
+                    print("No frame available, retrying...")
+                    time.sleep(0.1)
+                    continue
+                ret, buffer = cv2.imencode('.jpg', counter.frame)
+                if not ret:
+                    print("Failed to encode frame")
+                    time.sleep(0.1)
+                    continue
+                frame = buffer.tobytes()
+                
+                yield (b'--frame\r\n'
+                       b'Content-Type: image/jpeg\r\n\r\n' + 
+                       frame + 
+                       b'\r\n')
+            time.sleep(0.033)  # Target ~30 FPS
             
-            ret,frame = cap.read()
+            
+                
 
-            if not ret :
-                
-                cap.release()
-                cap = cv2.VideoCapture(CAMERA_URL)
-                ret,frame = cap.read()
-                
-                
-            ret,buffer = cv2.imencode('.jpg',frame)
-            trans_frame= buffer.tobytes()
             
-            yield (b'--frame\r\n'
-                   b'Content-Type: image/jpeg\r\n\r\n' + 
-                   trans_frame + 
-                   b'\r\n')
-                
     return StreamingHttpResponse(
         generate(),
         content_type="multipart/x-mixed-replace; boundary=frame"
     )
 
-
-# make the object of annotation 
-
-def annotate(request):
-    def generate():
-        try:
-            while True:
-                
-                with counter.lock:
-                    detection = {"xyxy" : counter.xyxy.tolist(),
-                                 "confidence" : counter.confidence.tolist(),
-                                 "class_id" : counter.class_id.tolist()
-                                 }
-                    
-                    time.sleep(0.01)
-                    
-                    yield f'data:{json.dumps(detection)}\n\n' # becausse the data can be changed over time, so we need to use json.dumps to convert the data that can be dumped with json format
-
-        except Exception as e : 
-            print("Error in annotate:",e)
-    
-    return StreamingHttpResponse(generate(), content_type="text/event-stream")
         
     
 from django.http import JsonResponse
@@ -102,6 +69,9 @@ def get_chart_data(request):
     with counter.lock:  # Ensure thread safety
         
         data = {
+            "xyxy" : counter.xyxy.tolist(),
+            "confidence" : counter.confidence.tolist(),
+            "cls" : counter.class_id.tolist(),
             "dates": list(counter.date),
             "linecount1": list(counter.linecount1),
             "linecount2": list(counter.linecount2),
@@ -109,7 +79,6 @@ def get_chart_data(request):
             "polygon1count": list(counter.polygon1count),
             "polygon2count": list(counter.polygon2count),
         }
-        time.sleep(0.015)
         
         
     return JsonResponse(data)
