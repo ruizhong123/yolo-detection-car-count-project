@@ -3,12 +3,14 @@ from django.utils import timezone
 import matplotlib.pyplot as plt 
 import supervision as sv
 from io import BytesIO
+from .models import countData
 import numpy as np
 import threading
 import base64
 import cv2
 import time
 import queue
+
 
 
 from collections import deque
@@ -160,6 +162,70 @@ class objectdetection_countingregion:
                     self.datetime.append(timezone.localtime().strftime("%H:%M:%S"))
                     
                     self.last_update_date = current_time
+                    
+                    
+    # load data from database(model.py) 
+    def _load_data(self):
+        """ load data from database(model) """
+        
+        with self.lock:
+            
+            try:
+                # fetch 50 data from database  
+                lastest = countData.objects.all()[:24]
+
+                for entry in reversed(lastest):
+
+                    self.date.append(entry.date)
+                    self.datetime.append(entry.datetime)
+                    self.polygon1count.append(entry.polygon1count)
+                    self.polygon2count.append(entry.polygon2count)
+                    self.linecount1.append(entry.linecount1)
+                    self.linecount2.append(entry.linecount2)
+                    
+                    if lastest :
+                        
+                        self.last_update_date = lastest[0].timestep
+                    
+                    else:
+                        return None 
+            
+            
+            
+            except Exception as e:
+                
+                print(f'Error from loading data : {e}')
+                
+    def _save_data(self,date=None,datetime=None,polygon1count=0,polygon2count=0,linecount1=0,linecount2=0):
+        
+        with self.lock:
+            
+            try:
+                
+                # using data from recording function 
+                 
+                countData.objects.create(
+                    date = self.date,
+                    datetime = self.datetime,
+                    polygon1count = self.polygon1count,
+                    polygon2count = self.polygon2count,
+                    linecount1 = self.linecount1,
+                    linecount2 = self.linecount2
+                )
+                
+                print(f"save data to database : {date},{datetime},{polygon1count},{polygon2count},{linecount1},{linecount2}")
+                
+
+
+            except Exception as e :
+                
+                print(f" save data into database ")
+            
+            
+        
+        
+        
+        
             
             
 
