@@ -35,7 +35,7 @@ async def stream_video(request):
     def generate(): 
         
         while True:
-            with counter.lock:
+            with counter.frame_lock:
                 if counter.frame is None:
                     print("No frame available, retrying...")
                     time.sleep(0.1)
@@ -67,8 +67,7 @@ async def stream_video(request):
 from django.http import JsonResponse
 
 async def get_chart_data(request):
-    with counter.lock:  # Ensure thread safety
-        
+    with counter.data_lock:  # Ensure thread safety
         data = {
             "xyxy" : counter.xyxy.tolist(),
             "confidence" : counter.confidence.tolist(),
@@ -80,8 +79,6 @@ async def get_chart_data(request):
             "polygon1count": list(counter.polygon1count),
             "polygon2count": list(counter.polygon2count),
         }
-        
-        
     return JsonResponse(data)
 
 @gzip_page
