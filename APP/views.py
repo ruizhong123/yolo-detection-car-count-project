@@ -24,7 +24,7 @@ polygon2 = np.array([[330, 240], [352, 175], [270, 150], [180, 150]])
 
 # Initialize counter
 CAMERA_URL = 'https://cctvn.freeway.gov.tw/abs2mjpg/bmjpg?camera=13380'
-counter = utiles1.objectdetection_countingregion(CAMERA_URL, model, initial_point, end_point, polygon1, polygon2)
+counter = utiles1.ObjectDetectionCountingRegion(CAMERA_URL, model, initial_point, end_point, polygon1, polygon2)
 
 @gzip_page
 
