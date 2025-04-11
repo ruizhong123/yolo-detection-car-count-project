@@ -256,31 +256,31 @@ class ObjectDetectionCountingRegion:
         
         try:
             
-        
-            logger.debug("Loading data from database")
-            latest_polygon = CountData_for_polygon.objects.all()[:10]
-            latest_line = CountData_for_Line.objects.all()[:24]
-            
-            self.date.clear()
-            self.datetime.clear()
-            self.linecount1.clear()
-            self.linecount2.clear()
-            self.polygon1count.clear()
-            self.polygon2count.clear()
-            
-            for entry in latest_line:
-                self.date.append(entry.date)
+            with self.data_lock:
+                logger.debug("Loading data from database")
+                latest_polygon = CountData_for_polygon.objects.all()[:10]
+                latest_line = CountData_for_Line.objects.all()[:24]
                 
-                self.linecount1.append(entry.linecount1)
-                self.linecount2.append(entry.linecount2)
-            
-            for entry in latest_polygon:
+                self.date.clear()
+                self.datetime.clear()
+                self.linecount1.clear()
+                self.linecount2.clear()
+                self.polygon1count.clear()
+                self.polygon2count.clear()
                 
-                self.datetime.append(entry.datetime)
-                self.polygon1count.append(entry.polygon1count)
-                self.polygon2count.append(entry.polygon2count)
+                for entry in latest_line:
+                    self.date.append(entry.date)
+                    
+                    self.linecount1.append(entry.linecount1)
+                    self.linecount2.append(entry.linecount2)
                 
-            logger.info(f"Loaded {len(latest_line)} line records and {len(latest_polygon)} polygon records")
+                for entry in latest_polygon:
+                    
+                    self.datetime.append(entry.datetime)
+                    self.polygon1count.append(entry.polygon1count)
+                    self.polygon2count.append(entry.polygon2count)
+                    
+                logger.info(f"Loaded {len(latest_line)} line records and {len(latest_polygon)} polygon records")
     
         except Exception as e:
             logger.error(f"Load data error: {e}")
