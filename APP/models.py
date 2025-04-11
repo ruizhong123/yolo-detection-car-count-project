@@ -2,21 +2,22 @@ from django.db import models
 
 # Create your models here.
 
-## change structure for database 
-class CountData(models.Model):
+## change structure for database
+
+class CountData_for_Line(models.Model):
     
+    """Model to store count data"""
     
-    timestep = models.DateTimeField(auto_now_add=True, db_index=True)  # Index for faster filtering
-    
-    timestep = models.DateTimeField(auto_now_add=True)
-    date = models.CharField(max_length=8,null=True, blank=True)
-    datetime = models.CharField(max_length=8,null=True, blank=True)
+    date = models.CharField(max_length=8, blank=True, default="")
     linecount1 = models.IntegerField(default=0)
     linecount2 = models.IntegerField(default=0)
+ 
+class CountData_for_polygon(models.Model):
+    
+    """Model to store count datatime"""
+    
+    datetime = models.CharField(max_length=8, blank=True, default="")
     polygon1count = models.IntegerField(default=0)
     polygon2count = models.IntegerField(default=0)
     
-    
-    class Meta:
-        indexes = [models.Index(fields=['timestep'])]  # Ensure index
     
