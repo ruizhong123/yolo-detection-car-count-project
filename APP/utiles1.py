@@ -75,7 +75,7 @@ class ObjectDetectionCountingRegion:
                 self.cap.release()
                 
             for i in (self.frame_thread, self.data_thread):
-                i.join(timeout=1)
+                i.join()
                 
     def _update_frame(self):
         
@@ -101,7 +101,7 @@ class ObjectDetectionCountingRegion:
                     logger.warning("Failed to capture frame, reconnecting...")
                     self.cap.release()
                     self.cap = cv2.VideoCapture(self.url)
-                    time.sleep(1)
+                    time.sleep(0.1)
                     
                     continue
                 
@@ -172,7 +172,7 @@ class ObjectDetectionCountingRegion:
                     CountData_for_Line.objects.all().delete()
                     
                     logger.info(f"Deleted all CountData records at 1 AM")
-                    self._load_data()
+                
                 
                 # 6-minute polygon save
                 if (current_time.minute % 6 == 0 and current_time.second == 0 and 
@@ -202,7 +202,7 @@ class ObjectDetectionCountingRegion:
                 
                 ## cache data from database 
                 
-                if current_time.minute % 6 == 0 :
+                if current_time.second % 5 == 0 :
                     self._load_data()
                     
                 
@@ -210,7 +210,7 @@ class ObjectDetectionCountingRegion:
             
             except Exception as e:
                 logger.error(f"Frame update error: {e}")
-                time.sleep(0.01)
+                
 
 
     
@@ -224,13 +224,16 @@ class ObjectDetectionCountingRegion:
                 try:
                     with self.data_lock:
                         
-                        if datatype == "linedata":
-                            CountData_for_Line.objects.create(**data)
-                            
-                        elif datatype == "polygondata":
-                            CountData_for_polygon.objects.create(**data)
-                        
-                        logger.info(f"Saved line data: {data}" if datatype == "linedata" else f"Saved polygon data: {data}")
+                        if timezone.localtime().minute % 6 == 0 and timezone.localtime().second == 0:
+                            if datatype == "linedata":
+                                CountData_for_Line.objects.create(**data)
+                                logger.info(f"Saved line data: {data}")
+
+                            if datatype == "polygondata":
+                                CountData_for_polygon.objects.create(**data)
+                                logger.info(f"Saved polygon data: {data}")
+
+                            logger.info(f"Saved line data: {data}" if datatype == "linedata" else f"Saved polygon data: {data}")
                         
                 except Exception as e:
                     logger.error(f"Data save error: {e}")
