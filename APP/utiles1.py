@@ -13,6 +13,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 class ObjectDetectionCountingRegion:
+    
     def __init__(self, url, model, initial_point, end_point, polygon1, polygon2):
         
         self.url = url
@@ -113,7 +114,7 @@ class ObjectDetectionCountingRegion:
                 logger.debug("Frame prediction completed")
                 
                 
-                                    # Detection and zone logic
+                # Detection and zone logic
                 self.xyxy = self.anno_img.boxes.xyxy.cpu().numpy()
                 self.confidence = self.anno_img.boxes.conf.cpu().numpy()
                 self.class_id = self.anno_img.boxes.cls.cpu().numpy().astype(int)
@@ -148,9 +149,18 @@ class ObjectDetectionCountingRegion:
                     "polygon2count": 0
                 }
                 
+                
+                ## cache data from database 
+                
+                if current_time.second % 5 == 0 :
+                    self._load_data()
+                
+                
+                
                 # Line zone counts
                 # Hourly save at :00:00    
                 if current_time.hour != current_hour and current_time.minute == 0 and current_time.second == 0:
+                   
                     logger.info("Performing hourly save")
                     
                     linedata.update({
@@ -167,9 +177,18 @@ class ObjectDetectionCountingRegion:
                 
                 # 1 AM reset
                 if current_time.hour == 1 and current_time.minute == 0 and current_time.second == 0:
+                   
                     logger.info("Performing 1 AM reset")
                     
                     CountData_for_Line.objects.all().delete()
+                    
+                    linedata.update({
+                        "date": current_time.strftime("%H:%M:%S"),
+                        "linecount1": 0,
+                        "linecount2": 0
+                    })
+                    
+                    self.data_queue.put(("linedata",linedata.copy()))
                     
                     logger.info(f"Deleted all CountData records at 1 AM")
                 
@@ -177,6 +196,7 @@ class ObjectDetectionCountingRegion:
                 # 6-minute polygon save
                 if (current_time.minute % 6 == 0 and current_time.second == 0 and 
                     (self.last_update_date is None or current_time > self.last_update_date + timezone.timedelta(seconds=1))):
+                    
                     if current_time.minute == 0 and current_time.second == 0:
                         
                         with self.data_lock:
@@ -197,17 +217,6 @@ class ObjectDetectionCountingRegion:
                     
                     self.last_update_date = current_time
                     
-                
-                
-                
-                ## cache data from database 
-                
-                if current_time.second % 5 == 0 :
-                    self._load_data()
-                    
-                
-                
-            
             except Exception as e:
                 logger.error(f"Frame update error: {e}")
                 
