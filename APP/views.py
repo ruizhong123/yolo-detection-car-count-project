@@ -40,7 +40,7 @@ async def stream_video(request):
                     print("No frame available, retrying...")
                     time.sleep(0.1)
                     continue
-                ret, buffer = cv2.imencode('.jpg', counter.frame)
+                ret, buffer = cv2.imencode('.jpg', counter.frame, [int(cv2.IMWRITE_JPEG_QUALITY), 50])
                 if not ret:
                     print("Failed to encode frame")
                     time.sleep(0.1)
