@@ -231,19 +231,20 @@ class ObjectDetectionCountingRegion:
                 
                 datatype,data = self.data_queue.get(timeout=1)
                 try:
-                    with self.data_lock:
+                    with self.data_lock:               
                         
-                        if timezone.localtime().minute % 6 == 0 and timezone.localtime().second == 0:
-                            if datatype == "linedata":
-                                CountData_for_Line.objects.create(**data)
-                                logger.info(f"Saved line data: {data}")
-
-                            if datatype == "polygondata":
-                                CountData_for_polygon.objects.create(**data)
-                                logger.info(f"Saved polygon data: {data}")
-
-                            logger.info(f"Saved line data: {data}" if datatype == "linedata" else f"Saved polygon data: {data}")
+                        if datatype == "linedata":
+                            
+                            CountData_for_Line.objects.create(**data)
+                            logger.info(f"Saved line data: {data}")
                         
+                        if datatype == "polygondata":
+                            
+                            CountData_for_polygon.objects.create(**data)
+                            logger.info(f"Saved polygon data: {data}")
+                        
+                        logger.info(f"Saved line data: {data}" if datatype == "linedata" else f"Saved polygon data: {data}")
+                    
                 except Exception as e:
                     logger.error(f"Data save error: {e}")
                     
