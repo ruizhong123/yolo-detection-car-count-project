@@ -40,7 +40,8 @@
         const canvas1 = document.getElementById('canvas_format_image');
         const ctx1 = canvas1.getContext('2d');
         const video = document.createElement('img');
-        const stalltimeout = 5000; // 5 seconds for video stalling 
+        const stalltimeout = 5000; // 5 seconds for video stalling
+        const errorElement = document.getElementById('error'); 
         
         // set reload video stream time 
         let isvideostreaming = false;
@@ -50,6 +51,8 @@
         
         function videoloading() {
             video.src = "{% url 'stream_video' %}?" + new Date().getTime();
+            errorElement.textContent = 'Loading stream...';
+            errorElement.style.display = 'block';
         }
 
         // onload video streaming 
@@ -59,7 +62,10 @@
             console.log('Stream loaded successfully');
             isvideostreaming = true;
 
+            lastframeTime = Date.now();
+            
             const errorElement = document.getElementById('error');
+
             if (errorElement) {
                 errorElement.style.display = 'none';
             }
@@ -70,7 +76,7 @@
         video.onerror = () => {
             console.error('Failed to load stream');
         };
-         
+
 
         // Detection data storage
         let detectionData = { xyxy: [], confidence: [], class_id: [] };
@@ -83,7 +89,7 @@
         function drawFrame() {
             try {
 
-                if (video.complete && video.naturalWidth > 0) {
+                if (video.complete && video.naturalWidth > 0 && isvideostreaming) {
                     ctx1.clearRect(0, 0, canvas1.width, canvas1.height);
                 
                     // Draw video frame
@@ -123,7 +129,11 @@
                     polygon2.forEach(([x, y]) => ctx1.lineTo(x, y));
                     ctx1.closePath();
                     ctx1.strokeStyle = 'purple';
-                    ctx1.stroke(); 
+                    ctx1.stroke();
+                    
+                    
+
+                    lastframeTime = Date.now(); // Update only on successful draw
 
                 } else {
 
