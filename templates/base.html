@@ -19,6 +19,7 @@
             
 
             <h1> 五股交流道目前車況  </h1>
+            <div id="error" style="color: red; display: block;">Loading stream...</div>
             <canvas id="canvas_format_image" width="352" height="240" alt='stream_video'></canvas>
         
         </div>
@@ -57,13 +58,19 @@
         video.onload = () => {
             console.log('Stream loaded successfully');
             isvideostreaming = true;
-            document.getElementById('error').style.display = 'none';
+
+            const errorElement = document.getElementById('error');
+            if (errorElement) {
+                errorElement.style.display = 'none';
+            }
+
         };
 
         // find error for uploading video
         video.onerror = () => {
             console.error('Failed to load stream');
-        }; 
+        };
+         
 
         // Detection data storage
         let detectionData = { xyxy: [], confidence: [], class_id: [] };
@@ -76,7 +83,7 @@
         function drawFrame() {
             try {
 
-                if (video.complete) {
+                if (video.complete && video.naturalWidth > 0) {
                     ctx1.clearRect(0, 0, canvas1.width, canvas1.height);
                 
                     // Draw video frame
@@ -87,7 +94,14 @@
                     ctx1.lineWidth = 2;
 
                     detectionData.xyxy.forEach(([x1, y1, x2, y2]) => {
-                        ctx1.strokeRect(x1, y1, x2 - x1, y2 - y1);});
+
+                        try {
+                            ctx1.strokeRect(x1, y1, x2 - x1, y2 - y1);
+                        } catch (error) {
+                            console.error('Error drawing bounding box:', error);
+                        }
+
+                    });
 
                     // Draw line zone
                     ctx1.beginPath();
@@ -95,7 +109,7 @@
                     ctx1.lineTo(lineZone.end.x, lineZone.end.y);
                     ctx1.strokeStyle = 'blue';
                     ctx1.stroke();
-
+                    
                     // Draw polygon zones
                     ctx1.beginPath();
                     ctx1.moveTo(polygon1[0][0], polygon1[0][1]);
@@ -103,7 +117,7 @@
                     ctx1.closePath();
                     ctx1.strokeStyle = 'green';
                     ctx1.stroke();
-
+                    
                     ctx1.beginPath();
                     ctx1.moveTo(polygon2[0][0], polygon2[0][1]);
                     polygon2.forEach(([x, y]) => ctx1.lineTo(x, y));
@@ -129,6 +143,7 @@
             } catch (error) {
                 console.error('Error drawing frame:', error);
                 handleVideo();
+                requestAnimationFrame(drawFrame);
             }
         }
         
@@ -137,8 +152,8 @@
         function handleVideo() {
             const currentTime = Date.now();
             if (currentTime - lastframeTime > stalltimeout) {
-                console.warning('Video stream stalled, reloading...');
-                videoreloading();
+                console.warn('Video stream stalled, reloading...');
+                videoloading();
                 lastframeTime = currentTime;
 
             } else {
@@ -163,7 +178,8 @@
                 .catch(error => console.error('Error fetching detection data:', error));
         }
 
-        setInterval(fetchDetectionData, 500);
+        setInterval(fetchDetectionData, 1000); // Fetch detection data every second
+
 
         
         // Define your custom update interval here (in milliseconds)
