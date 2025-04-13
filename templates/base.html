@@ -161,13 +161,11 @@
 
         function handleVideo() {
             const currentTime = Date.now();
-            if (currentTime - lastframeTime > stalltimeout) {
+            if (isvideostreaming == false   && (currentTime - lastframeTime) > stalltimeout) {
                 console.warn('Video stream stalled, reloading...');
                 videoloading();
                 lastframeTime = currentTime;
 
-            } else {
-                lastframeTime = currentTime;
             } 
         }
 
