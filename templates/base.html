@@ -8,7 +8,7 @@
         .container { display: flex; gap: 20px; }
         .left_column { flex: 1; }
         .right_column { flex: 1; }
-        canvas { width: 100% !important; max-width: 1000px; height: auto; margin-bottom: 20px; border: 1px solid #ccc; }
+        canvas { width: 100% !important; max-width: 1000px; height: auto; background: transparent; margin-bottom: 20px; border: 1px solid #ccc; }
 
     </style>
 </head>
@@ -19,7 +19,7 @@
             
 
             <h1> 五股交流道目前車況  </h1>
-            <div id="error" style="color: red; display: block;">Loading stream...</div>
+            <div id='error' style="display: block;"> Loading stream ... </div>
             <canvas id="canvas_format_image" width="352" height="240" alt='stream_video'></canvas>
         
         </div>
@@ -39,42 +39,55 @@
 
         const canvas1 = document.getElementById('canvas_format_image');
         const ctx1 = canvas1.getContext('2d');
-        const video = document.createElement('img');
-        const stalltimeout = 5000; // 5 seconds for video stalling
-        const errorElement = document.getElementById('error'); 
-        
+        const stalltimeout = 5000; // 1 second for video stalling
+        const errorElement = document.getElementById('error')
+        const streamUrl = "{% url 'stream_video' %}"
+
+        let video = new Image();
         // set reload video stream time 
         let isvideostreaming = false;
-        let lastframeTime = Date.now();
 
-        // loading video function 
-        
+        // loading video stream
         function videoloading() {
-            video.src = "{% url 'stream_video' %}?" + new Date().getTime();
-            errorElement.textContent = 'Loading stream...';
+            
+            console.log(' Fetching stream :' ,streamUrl);
+            video.src = streamUrl + "?" + new Date().getTime();
+            isvideostreaming = true ;
+            errorElement.textContent = ' Initialization error ';
             errorElement.style.display = 'block';
         }
+        
+        // Handle frame load 
 
-        // onload video streaming 
-
-        // Initial load handler
         video.onload = () => {
-            console.log('Stream loaded successfully');
+            console.log('Frame loaded , size :',video.naturalWidth, 'x' , video.naturalHeight);
             isvideostreaming = true;
-
             lastframeTime = Date.now();
             
-            const errorElement = document.getElementById('error');
-
             if (errorElement) {
+                errorElement.textContent = '';
                 errorElement.style.display = 'none';
+                console.log(' Error element hidden : Stream activate ');
             }
 
+            draw_the_plot_on_Frame();
+            setTimeout(videoloading,33);
         };
 
         // find error for uploading video
         video.onerror = () => {
-            console.error('Failed to load stream');
+
+            isvideostreaming = false;
+            
+            if (errorElement) {
+                errorElement.textContent = ' Stream error. Retrying ... ';
+                errorElement.style.display = 'block';
+                console.log('Error element hidden :stream activate ')
+
+            }
+
+            draw_the_plot_on_Frame();
+            setTimeout(videoloading,33);
         };
 
 
@@ -82,29 +95,40 @@
         let detectionData = { xyxy: [], confidence: [], class_id: [] };
 
         // Annotation settings
-        const lineZone = { start: { x: 70, y: 170 }, end: { x: 320, y: 170 } };
+        const lineZone = { start: { x: 70, y: 170 }, end: { x: 320, y: 170 }};
         const polygon1 = [[100, 240], [325, 240], [170, 150], [80, 150]];
         const polygon2 = [[330, 240], [352, 175], [270, 150], [180, 150]];
 
-        function drawFrame() {
+        function draw_the_plot_on_Frame() {
+            
             try {
 
                 if (video.complete && video.naturalWidth > 0 && isvideostreaming) {
-                    ctx1.clearRect(0, 0, canvas1.width, canvas1.height);
-                
-                    // Draw video frame
-                    ctx1.drawImage(video, 0, 0, canvas1.width, canvas1.height);
+                    // draw frame on canvas
+                    ctx1.clearRect(0,0,canvas1.width,canvas1.height)
+                    ctx1.drawImage(video,0,0,canvas1.width,canvas1.height)
 
                     // Draw bounding boxes
                     ctx1.strokeStyle = 'red';
                     ctx1.lineWidth = 2;
 
-                    detectionData.xyxy.forEach(([x1, y1, x2, y2]) => {
+                    detectionData.xyxy.forEach(([x1, y1, x2, y2],index) => {
 
                         try {
-                            ctx1.strokeRect(x1, y1, x2 - x1, y2 - y1);
+                            const width = x2 - x1;
+                            const height = y2 - y1;
+
+                            // prevent the data of detection have nan and negative   
+                            if (isFinite(width) && isFinite(height) && 
+                                width > 0 && height > 0 && x1 >= 0 && y1 >= 0
+                                && x2 <= canvas1.width && y2 <= canvas1.height) {
+                                    ctx1.strokeRect(x1,y1,width,height);
+                                } else {
+                                    console.warn('Invalid box ${index} : [${x1},${y1},${x2},${y2}]');
+                                }
+
                         } catch (error) {
-                            console.error('Error drawing bounding box:', error);
+                            console.error('Error drawing bounding box ${index}:', error);
                         }
 
                     });
@@ -131,50 +155,53 @@
                     ctx1.strokeStyle = 'purple';
                     ctx1.stroke();
                     
-                    
-
                     lastframeTime = Date.now(); // Update only on successful draw
 
                 } else {
-
-                    // show loading page 
-                    ctx1.fillStyle = '';
-                    ctx1.clearRect(0, 0, canvas1.width, canvas1.height);
-                    ctx1.fillRect(0, 0, canvas1.width, canvas1.height);
-                    ctx1.fillStyle = 'white';
-
-                    // reload video stream
-                    handleVideo();
-                    console.error('Video not ready yet');
+                    if (errorElement) {
+                        errorElement.style.display = 'none';
+                        console.log('Stream not ready - complete:', video.complete, 'width:', video.naturalWidth);
+                    }
                 }
-
-                requestAnimationFrame(drawFrame);
 
             } catch (error) {
                 console.error('Error drawing frame:', error);
-                handleVideo();
-                requestAnimationFrame(drawFrame);
+                if (errorElement) {
+                    errorElement.textContent = 'Rendering error. Retrying...';
+                    errorElement.style.display = 'block';
+                }
             }
+
+            requestAnimationFrame(draw_the_plot_on_Frame);
         }
         
-        // make handle video function ,when loading video stream meet error ,make video can consistently play
+        // create  handle video function ,when loading video stream meet error ,make video can consistently play
 
-        function handleVideo() {
-            const currentTime = Date.now();
-            if (isvideostreaming == false   && (currentTime - lastframeTime) > stalltimeout) {
+        function checkStreamStall() {
+            if ((Date.now() - lastframeTime) > stalltimeout ) {
+
                 console.warn('Video stream stalled, reloading...');
-                videoloading();
-                lastframeTime = currentTime;
+                isvideostreaming = false;
 
+                if (errorElement){
+                    // present on website 
+                    errorElement.textContent = 'Stream stalled . Retrying...';
+                    errorElement.style.display = 'block';
+                    // appear on console 
+                    console.warn('Stream stalled , reloading...')
+                }
+                videoloading();
             } 
+
         }
 
-        video.onerror = function() {
-            console.error('Failed to load stream');
-        };
 
+        setInterval(checkStreamStall,1000);
         videoloading();
-        drawFrame();
+        draw_the_plot_on_Frame();
+
+
+
 
         // Fetch detection data and 
         function fetchDetectionData() {
