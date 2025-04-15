@@ -71,7 +71,7 @@
             }
 
             draw_the_plot_on_Frame();
-            setTimeout(videoloading,33);
+            setTimeout(videoloading,66);
         };
 
         // find error for uploading video
@@ -87,7 +87,7 @@
             }
 
             draw_the_plot_on_Frame();
-            setTimeout(videoloading,33);
+            setTimeout(videoloading,66);
         };
 
 
@@ -213,7 +213,7 @@
                 .catch(error => console.error('Error fetching detection data:', error));
         }
 
-        setInterval(fetchDetectionData, 1000); // Fetch detection data every second
+        setInterval(fetchDetectionData, 500); // Fetch detection data every second
 
 
         
@@ -292,7 +292,7 @@
         }
 
         // Set the interval to your custom time
-        setInterval(updateCharts,5000); // goal is to wait data to load 
+        setInterval(updateCharts,30000); // goal is to wait data to load 
        
         
     </script>
