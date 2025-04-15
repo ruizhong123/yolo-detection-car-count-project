@@ -12,7 +12,7 @@ import base64
 import time 
 
 # Model and polygons initialization
-model = YOLO('yolo12n.pt')
+model = YOLO('yolo8n.pt')
 
 # Line zone
 initial_point = sv.Point(70, 170)
@@ -43,7 +43,7 @@ async def stream_video(request):
                 ret, buffer = cv2.imencode('.jpg', counter.frame, [int(cv2.IMWRITE_JPEG_QUALITY), 60])
                 if not ret:
                     print("Failed to encode frame")
-                    time.sleep(0.1)
+        
                     continue
                 frame = buffer.tobytes()
                 
@@ -51,7 +51,7 @@ async def stream_video(request):
                        b'Content-Type: image/jpeg\r\n\r\n' + 
                        frame + 
                        b'\r\n')
-            time.sleep(0.033)  # Target ~30 FPS
+            
             
             
                 
