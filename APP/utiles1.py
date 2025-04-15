@@ -102,7 +102,6 @@ class ObjectDetectionCountingRegion:
                     logger.warning("Failed to capture frame, reconnecting...")
                     self.cap.release()
                     self.cap = cv2.VideoCapture(self.url)
-                    time.sleep(0.1)
                     
                     continue
                 
@@ -130,7 +129,7 @@ class ObjectDetectionCountingRegion:
                 self.linezone.trigger(detections=detections)
                 self.polygonzone1.trigger(detections=detections)
                 self.polygonzone2.trigger(detections=detections)
-                time.sleep(0.1)  # Small delay to prevent CPU overload
+                time.sleep(0.01)  # Small delay to prevent CPU overload
                 
                 
                 
