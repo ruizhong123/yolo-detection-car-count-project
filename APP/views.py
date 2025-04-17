@@ -12,7 +12,7 @@ import base64
 import time 
 
 # Model and polygons initialization
-model = YOLO('yolo8n.pt')
+model = YOLO('yolo12n.pt')
 
 # Line zone
 initial_point = sv.Point(70, 170)

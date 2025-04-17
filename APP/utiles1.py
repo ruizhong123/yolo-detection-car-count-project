@@ -183,13 +183,13 @@ class ObjectDetectionCountingRegion:
                     
                     linedata.update({
                         "date": current_time.strftime("%H:%M:%S"),
-                        "linecount1": 0,
-                        "linecount2": 0
+                        "linecount1": int(self.linezone.in_count),
+                        "linecount2": int(self.linezone.out_count)
                     })
                     
                     self.data_queue.put(("linedata",linedata.copy()))
                     
-                    logger.info(f"Deleted all CountData records at 1 AM")
+                    logger.info(f"Deleted all CountData records at 1 AM and restart ")
                 
                 
                 # 6-minute polygon save
@@ -229,6 +229,7 @@ class ObjectDetectionCountingRegion:
             try:
                 
                 datatype,data = self.data_queue.get(timeout=1)
+                
                 try:
                     with self.data_lock:               
                         
@@ -253,7 +254,7 @@ class ObjectDetectionCountingRegion:
                 continue
     
     def _load_data(self):
-        
+    
         try:
             
             with self.data_lock:

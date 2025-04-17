@@ -2,7 +2,9 @@
 <html>
 <head>
     <title>Video Streaming & Visualization</title>
+    
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
     <style>
 
         .container { display: flex; gap: 20px; }
@@ -31,7 +33,7 @@
             <h2> 累積車流量</h2>
             <canvas id="cul_car_barchart_l" width="300" height="200"></canvas>
             <canvas id="cul_car_barchart_r" width="300" height="200"></canvas>
-        
+            
         </div>
     </div>
 
@@ -268,7 +270,10 @@
             fetch("{% url 'get_data' %}")
                 .then(response => response.json())
                 .then(data => {
+
+                    // console output data 
                     console.log(data);
+                    
                     // Instant car count left road
                     ins_barChart_l.data.labels = data.datetime;
                     ins_barChart_l.data.datasets[0].data = data.polygon1count;
@@ -287,6 +292,7 @@
                     cul_barchart_r.data.labels = data.dates;
                     cul_barchart_r.data.datasets[0].data = data.linecount2;
                     cul_barchart_r.update();
+
                 })
                 .catch(error => console.error('Error fetching data:', error));
         }
