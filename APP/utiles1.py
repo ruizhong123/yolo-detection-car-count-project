@@ -45,7 +45,9 @@ class ObjectDetectionCountingRegion:
         # Threading and queue setup
         self.data_lock = threading.Lock()
         self.frame_lock = threading.Lock()
+        
         self.running = True
+        
         self.frame_queue = queue.Queue(maxsize=1)  # Single frame to reduce latency
         self.data_queue = queue.Queue()  # Queue for DB operations
         
@@ -62,14 +64,20 @@ class ObjectDetectionCountingRegion:
         # Start threads
         self.frame_thread = threading.Thread(target=self._update_frame, daemon=True)
         self.data_thread = threading.Thread(target=self._process_data_queue, daemon=True)
+        
         self.frame_thread.start()
         self.data_thread.start()
+        
         logger.info("ObjectDetectionCountingRegion initialized and threads started")
         
         
 
+
+    ## prevent other threading from distributing  
     def __del__(self):
+        
         self.running = False
+        
         with self.frame_lock:
             
             if hasattr(self, 'cap'):
@@ -83,6 +91,7 @@ class ObjectDetectionCountingRegion:
         self.cap = cv2.VideoCapture(self.url)
         
         if not self.cap.isOpened():
+            
             logger.error(f"Failed to open video stream: {self.url}")
             self.running = False
             return
@@ -90,11 +99,10 @@ class ObjectDetectionCountingRegion:
         current_hour = timezone.localtime().hour  # Initialize
         
         while self.running:
-           
+               
             try:
                 
-                logger.debug("Attempting to read frame")
-                
+                logger.debug("Attempting to read frame")      
                 ret, self.frame = self.cap.read()
                 
                 if not ret:
@@ -102,106 +110,76 @@ class ObjectDetectionCountingRegion:
                     logger.warning("Failed to capture frame, reconnecting...")
                     self.cap.release()
                     self.cap = cv2.VideoCapture(self.url)
-                    
                     continue
                 
                 logger.info("Frame captured successfully")
-                        
                 # predict frame
                 logger.debug("Starting YOLO prediction")
                 self.anno_img = self.model.predict(self.frame)[0]
                 logger.debug("Frame prediction completed")
-                
-                
                 # Detection and zone logic
                 self.xyxy = self.anno_img.boxes.xyxy.cpu().numpy()
                 self.confidence = self.anno_img.boxes.conf.cpu().numpy()
                 self.class_id = self.anno_img.boxes.cls.cpu().numpy().astype(int)
-                
                 detections = sv.Detections(
                     xyxy=self.xyxy,
                     confidence=self.confidence,
                     class_id=self.class_id
                 )
-                
                 # Update tracker and zones
                 self.tracker.update_with_detections(detections)
                 self.linezone.trigger(detections=detections)
                 self.polygonzone1.trigger(detections=detections)
                 self.polygonzone2.trigger(detections=detections)
                 time.sleep(0.01)  # Small delay to prevent CPU overload
-                
-                
-                
                 # Time-based data processing
                 current_time = timezone.localtime()
-                
                 linedata = {
                     "date": "",
                 "linecount1": 0,
                 "linecount2": 0
                 }
-                
                 polygondata = { 
                     "datetime": "",
                     "polygon1count": 0,
                     "polygon2count": 0
                 }
                 
-                
                 ## cache data from database 
-                
                 if current_time.second % 5 == 0 :
                     self._load_data()
-                
-                
                 
                 # Line zone counts
                 # Hourly save at :00:00    
                 if current_time.hour != current_hour and current_time.minute == 0 and current_time.second == 0:
-                   
+                
                     logger.info("Performing hourly save")
-                    
                     linedata.update({
                         "date": current_time.strftime("%H:%M:%S"),
                         "linecount1": int(self.linezone.in_count),
                         "linecount2": int(self.linezone.out_count)
                     })
-                    
-                    
                     self.data_queue.put(("linedata",linedata.copy()))
-                    
-                    
                     current_hour = current_time.hour
-                
                 # 1 AM reset
                 if current_time.hour == 1 and current_time.minute == 0 and current_time.second == 0:
-                   
+                
                     logger.info("Performing 1 AM reset")
-                    
                     CountData_for_Line.objects.all().delete()
-                    
                     linedata.update({
                         "date": current_time.strftime("%H:%M:%S"),
                         "linecount1": int(self.linezone.in_count),
                         "linecount2": int(self.linezone.out_count)
                     })
-                    
                     self.data_queue.put(("linedata",linedata.copy()))
-                    
                     logger.info(f"Deleted all CountData records at 1 AM and restart ")
-                
-                
                 # 6-minute polygon save
                 if (current_time.minute % 6 == 0 and current_time.second == 0 and 
                     (self.last_update_date is None or current_time > self.last_update_date + timezone.timedelta(seconds=1))):
-                    
                     if current_time.minute == 0 and current_time.second == 0:
-                        
                         with self.data_lock:
                             CountData_for_polygon.objects.all().delete()
-                            
-                            
+                    
                     logger.debug("Saving polygon data to queue")
                     
                     polygondata.update({
@@ -209,11 +187,7 @@ class ObjectDetectionCountingRegion:
                         "polygon1count": int(self.polygonzone1.current_count),
                         "polygon2count": int(self.polygonzone2.current_count)
                     })
-                    
-                    
-                    
                     self.data_queue.put(("polygondata", polygondata.copy()))
-                    
                     self.last_update_date = current_time
                     
             except Exception as e:
@@ -225,12 +199,11 @@ class ObjectDetectionCountingRegion:
     def _process_data_queue(self):
         
         while self.running:
-            
-            try:
-                
+            try:    
                 datatype,data = self.data_queue.get(timeout=1)
                 
                 try:
+                    
                     with self.data_lock:               
                         
                         if datatype == "linedata":

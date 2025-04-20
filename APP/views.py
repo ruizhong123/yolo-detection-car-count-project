@@ -27,7 +27,6 @@ CAMERA_URL = 'https://cctvn.freeway.gov.tw/abs2mjpg/bmjpg?camera=13380'
 counter = utiles1.ObjectDetectionCountingRegion(CAMERA_URL, model, initial_point, end_point, polygon1, polygon2)
 
 @gzip_page
-
 async def stream_video(request):
     
     """Stream video with region counting functionality"""
@@ -51,12 +50,7 @@ async def stream_video(request):
                        b'Content-Type: image/jpeg\r\n\r\n' + 
                        frame + 
                        b'\r\n')
-            
-            
-            
-                
-
-            
+        
     return StreamingHttpResponse(
         generate(),
         content_type="multipart/x-mixed-replace; boundary=frame"
