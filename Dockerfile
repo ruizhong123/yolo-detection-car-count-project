@@ -1,45 +1,55 @@
-# Use a lightweight Python 3.12 image
-FROM python:3.12-slim
+# Build stage
+FROM python:3.12-slim AS builder
 
-# Set the working directory inside the container
 WORKDIR /app
 
+# Set environment variables
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
 
-# run package on linux system 
+# Install build dependencies
+RUN apt-get update && apt-get install -y \
+    python3-dev \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy and install requirements
+COPY project/requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Final stage
+FROM python:3.12-slim
+
+WORKDIR /app
+
+# Install runtime dependencies
 RUN apt-get update && apt-get install -y \
     libgl1-mesa-glx \
     libglib2.0-0 \
     libsm6 \
     libxext6 \
     libxrender-dev \
+    curl \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
-    
 
-# Copy the requirements file
-COPY requirements.txt .
+# Create non-root user
+RUN useradd -m appuser && chown -R appuser /app
 
-# Install Python packages
-RUN pip install --no-cache-dir -r requirements.txt
+# Copy dependencies from builder
+COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
+COPY --from=builder /usr/local/bin /usr/local/bin
 
-# Copy all your app files
-COPY . .
+# Copy application code and model
+COPY --chown=appuser:appuser project/ .
+COPY --chown=appuser:appuser model/yolo12n.pt .
 
-# Copy the YOLO model
-COPY yolo12n.pt .
+# Switch to non-root user
+USER appuser
 
-
-
-# Open port 8000 for the web server
 EXPOSE 8000
 
-
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s CMD curl -f http://localhost:8000/ || exit 1
-
-# Run database migrations and start the server
-CMD ["sh", "-c", "python manage.py migrate && gunicorn --bind 0.0.0.0:8000 APP_SETTING.wsgi:application"]
+CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "1", "APP_SETTING.wsgi:application"]
 
 
 
