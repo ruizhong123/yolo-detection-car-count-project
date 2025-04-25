@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Video Streaming & Visualization</title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <style>
+
+        .container { display: flex; gap: 20px; }
+        .left_column { flex: 1; }
+        .right_column { flex: 1; }
+        canvas { width: 100% !important; max-width: 1000px; height: auto; background: transparent; margin-bottom: 20px; border: 1px solid #ccc; }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        
+        <div class="left_column">
+            
+
+            <h1> 五股交流道目前車況  </h1>
+            <div id='error' style="display: block;"> Loading stream ... </div>
+            <canvas id="canvas_format_image" width="352" height="240" alt='stream_video'></canvas>
+        
+        </div>
+        <div class="right_column">
+            <h1> 及時車流量 </h1>
+            <canvas id="ins_car_barChart_l" width="300" height="200"></canvas>
+            <canvas id="ins_car_barChart_r" width="300" height="200"></canvas>
+            
+            <h2> 累積車流量</h2>
+            <canvas id="cul_car_barchart_l" width="300" height="200"></canvas>
+            <canvas id="cul_car_barchart_r" width="300" height="200"></canvas>
+            
+        </div>
+    </div>
+
+    <script>
+
+        const canvas1 = document.getElementById('canvas_format_image');
+        const ctx1 = canvas1.getContext('2d');
+        const stalltimeout = 5000; // 1 second for video stalling
+        const errorElement = document.getElementById('error')
+        const streamUrl = "{% url 'stream_video' %}"
+
+        let video = new Image();
+        // set reload video stream time 
+        let isvideostreaming = false;
+
+        // loading video stream
+        function videoloading() {
+            
+            console.log(' Fetching stream :' ,streamUrl);
+            video.src = streamUrl + "?" + new Date().getTime();
+            isvideostreaming = true ;
+            errorElement.textContent = ' Initialization error ';
+            errorElement.style.display = 'block';
+        }
+        
+        // Handle frame load 
+
+        //
+
+        video.onload = () => {
+            console.log('Frame loaded , size :',video.naturalWidth, 'x' , video.naturalHeight);
+            isvideostreaming = true;
+            lastframeTime = Date.now();
+            
+            if (errorElement) {
+                errorElement.textContent = '';
+                errorElement.style.display = 'none';
+                console.log(' Error element hidden : Stream activate ');
+            }
+
+            draw_the_plot_on_Frame();
+            setTimeout(videoloading,33);
+        };
+
+        // find error for uploading video
+        video.onerror = () => {
+
+            isvideostreaming = false;
+            
+            if (errorElement) {
+                errorElement.textContent = ' Stream error. Retrying ... ';
+                errorElement.style.display = 'block';
+                console.log('Error element hidden :stream activate ')
+
+            }
+
+            draw_the_plot_on_Frame();
+            setTimeout(videoloading,66);
+        };
+
+
+        // Detection data storage
+        let detectionData = { xyxy: [], confidence: [], class_id: [] };
+
+        // Annotation settings
+        const lineZone = { start: { x: 70, y: 170 }, end: { x: 320, y: 170 }};
+        const polygon1 = [[100, 240], [325, 240], [170, 150], [80, 150]];
+        const polygon2 = [[330, 240], [352, 175], [270, 150], [180, 150]];
+
+        function draw_the_plot_on_Frame() {
+            
+            try {
+
+                if (video.complete && video.naturalWidth > 0 && isvideostreaming) {
+                    // draw frame on canvas
+                    ctx1.clearRect(0,0,canvas1.width,canvas1.height)
+                    ctx1.drawImage(video,0,0,canvas1.width,canvas1.height)
+
+                    // Draw bounding boxes
+                    ctx1.strokeStyle = 'red';
+                    ctx1.lineWidth = 2;
+
+                    detectionData.xyxy.forEach(([x1, y1, x2, y2],index) => {
+
+                        try {
+                            const width = x2 - x1;
+                            const height = y2 - y1;
+
+                            // prevent the data of detection have nan and negative   
+                            if (isFinite(width) && isFinite(height) && 
+                                width > 0 && height > 0 && x1 >= 0 && y1 >= 0
+                                && x2 <= canvas1.width && y2 <= canvas1.height) {
+                                    ctx1.strokeRect(x1,y1,width,height);
+                                } else {
+                                    console.warn('Invalid box ${index} : [${x1},${y1},${x2},${y2}]');
+                                }
+
+                        } catch (error) {
+                            console.error('Error drawing bounding box ${index}:', error);
+                        }
+
+                    });
+
+                    // Draw line zone
+                    ctx1.beginPath();
+                    ctx1.moveTo(lineZone.start.x, lineZone.start.y);
+                    ctx1.lineTo(lineZone.end.x, lineZone.end.y);
+                    ctx1.strokeStyle = 'blue';
+                    ctx1.stroke();
+                    
+                    // Draw polygon zones
+                    ctx1.beginPath();
+                    ctx1.moveTo(polygon1[0][0], polygon1[0][1]);
+                    polygon1.forEach(([x, y]) => ctx1.lineTo(x, y));
+                    ctx1.closePath();
+                    ctx1.strokeStyle = 'green';
+                    ctx1.stroke();
+                    
+                    ctx1.beginPath();
+                    ctx1.moveTo(polygon2[0][0], polygon2[0][1]);
+                    polygon2.forEach(([x, y]) => ctx1.lineTo(x, y));
+                    ctx1.closePath();
+                    ctx1.strokeStyle = 'purple';
+                    ctx1.stroke();
+                    
+                    lastframeTime = Date.now(); // Update only on successful draw
+
+                } else {
+                    if (errorElement) {
+                        errorElement.style.display = 'none';
+                        console.log('Stream not ready - complete:', video.complete, 'width:', video.naturalWidth);
+                    }
+                }
+
+            } catch (error) {
+                console.error('Error drawing frame:', error);
+                if (errorElement) {
+                    errorElement.textContent = 'Rendering error. Retrying...';
+                    errorElement.style.display = 'block';
+                }
+            }
+
+            requestAnimationFrame(draw_the_plot_on_Frame);
+        }
+        
+        // create  handle video function ,when loading video stream meet error ,make video can consistently play
+
+        function checkStreamStall() {
+            if ((Date.now() - lastframeTime) > stalltimeout ) {
+
+                console.warn('Video stream stalled, reloading...');
+                isvideostreaming = false;
+
+                if (errorElement){
+                    // present on website 
+                    errorElement.textContent = 'Stream stalled . Retrying...';
+                    errorElement.style.display = 'block';
+                    // appear on console 
+                    console.warn('Stream stalled , reloading...')
+                }
+                videoloading();
+            } 
+
+        }
+
+
+        setInterval(checkStreamStall,1000);
+        videoloading();
+        draw_the_plot_on_Frame();
+
+
+
+
+        // Fetch detection data and 
+        function fetchDetectionData() {
+            fetch("{% url 'get_data' %}")
+                .then(response => response.json())
+                .then(data => {
+                    detectionData = data;  // Update detection data
+                })
+                .catch(error => console.error('Error fetching detection data:', error));
+        }
+
+        setInterval(fetchDetectionData, 500); // Fetch detection data every second
+
+
+        
+        // Define your custom update interval here (in milliseconds)
+
+        // Instant bar charts
+        const ins_barCtx_left = document.getElementById('ins_car_barChart_l').getContext('2d');
+        const ins_barCtx_right = document.getElementById('ins_car_barChart_r').getContext('2d');
+
+        const ins_barChart_l = new Chart(ins_barCtx_left, {
+            type: 'bar',
+            data: {
+                labels: [],
+                datasets: [{ label: '左車道', data: [], backgroundColor: 'blue' }]
+            },
+            options: { scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+        });
+
+        const ins_barChart_r = new Chart(ins_barCtx_right, {
+            type: 'bar',
+            data: {
+                labels: [],
+                datasets: [{ label: '右車道', data: [], backgroundColor: 'red' }]
+            },
+            options: { scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+        });
+
+        // Cumulative bar charts
+        const cul_barCtx_left = document.getElementById('cul_car_barchart_l').getContext('2d');
+        const cul_barCtx_right = document.getElementById('cul_car_barchart_r').getContext('2d');
+
+        const cul_barchart_l = new Chart(cul_barCtx_left, {
+            type: 'bar',
+            data: {
+                labels: [],
+                datasets: [{ label: '左車道', data: [], backgroundColor: 'blue' }]
+            },
+            options: { scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+        });
+
+        const cul_barchart_r = new Chart(cul_barCtx_right, {
+            type: 'bar',
+            data: {
+                labels: [],
+                datasets: [{ label: '右車道', data: [], backgroundColor: 'red' }]
+            },
+            options: { scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+        });
+
+        // Function to fetch and update chart data
+        function updateCharts() {
+            fetch("{% url 'get_data' %}")
+                .then(response => response.json())
+                .then(data => {
+
+                    // console output data 
+                    console.log(data);
+                    
+                    // Instant car count left road
+                    ins_barChart_l.data.labels = data.datetime;
+                    ins_barChart_l.data.datasets[0].data = data.polygon1count;
+                    ins_barChart_l.update();
+
+                    // Instant car count right road
+                    ins_barChart_r.data.labels = data.datetime;
+                    ins_barChart_r.data.datasets[0].data = data.polygon2count;
+                    ins_barChart_r.update();
+
+                    // Cumulative car count
+                    cul_barchart_l.data.labels = data.dates;
+                    cul_barchart_l.data.datasets[0].data = data.linecount1;
+                    cul_barchart_l.update();
+
+                    cul_barchart_r.data.labels = data.dates;
+                    cul_barchart_r.data.datasets[0].data = data.linecount2;
+                    cul_barchart_r.update();
+
+                })
+                .catch(error => console.error('Error fetching data:', error));
+        }
+
+        // Set the interval to your custom time
+        setInterval(updateCharts,30000); // goal is to wait data to load 
+       
+        
+    </script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
