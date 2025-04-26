@@ -2,4 +2,4 @@ django
 gunicorn
 ultralytics
 supervision
-
+awscli

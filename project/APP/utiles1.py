@@ -9,6 +9,9 @@ import time
 import queue
 from collections import deque
 import logging
+import json
+import boto3
+
 
 logger = logging.getLogger(__name__)
 
@@ -67,6 +70,12 @@ class ObjectDetectionCountingRegion:
         
         self.frame_thread.start()
         self.data_thread.start()
+        
+        ## set connect with bucket to store json data
+        
+        self.bucket_client = boto3.client('s3')
+        
+        
         
         logger.info("ObjectDetectionCountingRegion initialized and threads started")
         
@@ -199,6 +208,7 @@ class ObjectDetectionCountingRegion:
                         "polygon1count": int(self.polygonzone1.current_count),
                         "polygon2count": int(self.polygonzone2.current_count)
                     })
+                    
                     self.data_queue.put(("polygondata", polygondata.copy()))
                     self.last_update_date = current_time
                     
@@ -220,19 +230,49 @@ class ObjectDetectionCountingRegion:
                         
                         if datatype == "linedata":
                             
+                            # for sqlite 
                             CountData_for_Line.objects.create(**data)
+                            
+                            # for S3 bucket
+                            json_reponse = self.bucket_client.get_object(Bucket="cardata-store",Key="hour_data.json")
+                            json_reponse = json.loads(json_reponse['Body'].read().decode("utf-8")) 
+                            
+                            all_data = json_reponse
+                            all_data.append(data)
+                                
+                                
+                            self.bucket_client.put_object(Body=json.dumps(all_data),Bucket="cardata-store",Key="hour_data.json")
+                            
+                            
+                           
+
+                            self.bucket_client.put_object(Body=data,Bucket="cardata-store",Key="hour_data.json")
+                            
+                            
                             logger.info(f"Saved line data: {data}")
                             
                             ## when hour at 0:00 ,we sum all of the car count to caculate 
 
                                                            
                             
-                            
-                        
+
                         if datatype == "polygondata":
                             
                             CountData_for_polygon.objects.create(**data)
-                            logger.info(f"Saved polygon data: {data}")
+                            
+                            
+                            ## Aggragate data
+                            
+                            json_reponse = self.bucket_client.get_object(Bucket="cardata-store",Key="6minute_data.json")
+                            json_reponse = json.loads(json_reponse['Body'].read().decode("utf-8")) 
+                            
+                            all_data = json_reponse
+                            all_data.append(data)
+                                
+                                
+                            self.bucket_client.put_object(Body=json.dumps(all_data),Bucket="cardata-store",Key="6minute_data.json")
+                            
+                            logger.info(f"Saved polygon data: {all_data}")
                         
                         logger.info(f"Saved line data: {data}" if datatype == "linedata" else f"Saved polygon data: {data}")
                     
