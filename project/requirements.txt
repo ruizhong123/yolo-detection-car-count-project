@@ -3,3 +3,4 @@ gunicorn
 ultralytics
 supervision
 awscli
+boto3
