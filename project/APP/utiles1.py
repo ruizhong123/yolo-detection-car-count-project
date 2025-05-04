@@ -221,7 +221,8 @@ class ObjectDetectionCountingRegion:
     def _process_data_queue(self):
         
         while self.running:
-            try:    
+            try:
+                    
                 datatype,data = self.data_queue.get(timeout=1)
                 
                 try:
@@ -265,6 +266,7 @@ class ObjectDetectionCountingRegion:
                             
                             json_reponse = self.bucket_client.get_object(Bucket="cardata-store",Key="6minute_data.json")
                             json_reponse = json.loads(json_reponse['Body'].read().decode("utf-8")) 
+                            
                             
                             all_data = json_reponse
                             all_data.append(data)
@@ -323,3 +325,7 @@ class ObjectDetectionCountingRegion:
             
 
 
+
+
+    
+        

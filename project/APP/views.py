@@ -10,7 +10,7 @@ import json
 import cv2
 import base64
 import time 
-
+import asyncio
 # Model and polygons initialization
 model = YOLO('yolo12n.pt')
 
@@ -37,9 +37,11 @@ async def stream_video(request):
             with counter.frame_lock:
                 if counter.frame is None:
                     print("No frame available, retrying...")
-                    time.sleep(0.1)
+                    time.sleep(0.01)
                     continue
+                
                 ret, buffer = cv2.imencode('.jpg', counter.frame, [int(cv2.IMWRITE_JPEG_QUALITY), 60])
+
                 if not ret:
                     print("Failed to encode frame")
         
@@ -50,7 +52,8 @@ async def stream_video(request):
                        b'Content-Type: image/jpeg\r\n\r\n' + 
                        frame + 
                        b'\r\n')
-        
+            
+           
     return StreamingHttpResponse(
         generate(),
         content_type="multipart/x-mixed-replace; boundary=frame"
