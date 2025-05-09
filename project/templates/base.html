@@ -2,11 +2,9 @@
 <html>
 <head>
     <title>Video Streaming & Visualization</title>
-    
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    
     <style>
-
+        
         .container { display: flex; gap: 20px; }
         .left_column { flex: 1; }
         .right_column { flex: 1; }
@@ -19,7 +17,6 @@
         
         <div class="left_column">
             
-
             <h1> 五股交流道目前車況  </h1>
             <div id='error' style="display: block;"> Loading stream ... </div>
             <canvas id="canvas_format_image" width="352" height="240" alt='stream_video'></canvas>
@@ -178,7 +175,8 @@
 
             requestAnimationFrame(draw_the_plot_on_Frame);
         }
-        
+
+                
         // create  handle video function ,when loading video stream meet error ,make video can consistently play
 
         function checkStreamStall() {
@@ -199,13 +197,9 @@
 
         }
 
-
         setInterval(checkStreamStall,1000);
         videoloading();
         draw_the_plot_on_Frame();
-
-
-
 
         // Fetch detection data and 
         function fetchDetectionData() {
@@ -300,7 +294,8 @@
         }
 
         // Set the interval to your custom time
-        setInterval(updateCharts,30000); // goal is to wait data to load 
+        setInterval(updateCharts,30000); // goal is to wait data to load
+        
        
         
     </script>
