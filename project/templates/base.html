@@ -48,7 +48,6 @@
 
         // loading video stream
         function videoloading() {
-            
             console.log(' Fetching stream :' ,streamUrl);
             video.src = streamUrl + "?" + new Date().getTime();
             isvideostreaming = true ;
@@ -263,6 +262,7 @@
 
         // Function to fetch and update chart data
         function updateCharts() {
+            
             fetch("{% url 'get_data' %}")
                 .then(response => response.json())
                 .then(data => {

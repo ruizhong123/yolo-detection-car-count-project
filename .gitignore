@@ -3,3 +3,5 @@
 project/certs/nginx.crt
 project/certs/nginx.key
 
+nginx.conf
+
