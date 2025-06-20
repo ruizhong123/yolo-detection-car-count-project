@@ -1,7 +1,7 @@
 from django.http import StreamingHttpResponse
 from django.views.decorators.gzip import gzip_page
 from django.shortcuts import render
-from . import utiles1
+from . import utiles
 from ultralytics import YOLO
 import supervision as sv
 import numpy as np
@@ -24,7 +24,7 @@ polygon2 = np.array([[330, 240], [352, 175], [270, 150], [180, 150]])
 
 # Initialize counter
 CAMERA_URL = 'https://cctvn.freeway.gov.tw/abs2mjpg/bmjpg?camera=13380'
-counter = utiles1.ObjectDetectionCountingRegion(CAMERA_URL, model, initial_point, end_point, polygon1, polygon2)
+counter = utiles.ObjectDetectionCountingRegion(CAMERA_URL, model, initial_point, end_point, polygon1, polygon2)
 
 @gzip_page
 async def stream_video(request):
@@ -62,6 +62,7 @@ async def stream_video(request):
         
     
 from django.http import JsonResponse
+
 
 async def get_chart_data(request):
     with counter.data_lock:  # Ensure thread safety

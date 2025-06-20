@@ -1,11 +1,12 @@
 services:
-  django_web:
 
+  django_web:
     build:
       context: .
       dockerfile: Dockerfile
 
     deploy:
+
       resources:
         limits:
           cpus: "1.8"
@@ -14,6 +15,7 @@ services:
     entrypoint: ["/app/entrypoint.prod.sh"] # Fixed indentation
   
     environment:
+
       - PYTHONUNBUFFERED=1
       - PYTHONDONTWRITEBYTECODE=1
     
@@ -24,6 +26,7 @@ services:
     build:
       context: .
       dockerfile: nginx.Dockerfile  
+   
     ports:
       - 443:443
   

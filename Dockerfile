@@ -5,10 +5,13 @@ RUN mkdir /app
 WORKDIR /app
 
 # Set environment variables
+# import environment variable 
+
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 
 # Install build dependencies
+
 RUN apt-get update && apt-get install -y \
     python3-dev \
     libxml2-dev \
@@ -19,11 +22,12 @@ RUN apt-get update && apt-get install -y \
     libexpat1 \
     libgssapi-krb5-2 \
     && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/
 
+    
 # Copy and install requirements
-
 COPY project/requirements.txt .
+
 RUN pip install --default-timeout=1000 --no-cache-dir -r requirements.txt
 
 # Final stage

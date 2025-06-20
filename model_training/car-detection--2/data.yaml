@@ -1,0 +1,8 @@
+train: /home/ruizhong/entire_project/project_version5/model_training/car-detection--2/train
+test: /home/ruizhong/entire_project/project_version5/model_training/car-detection--2/test
+val: /home/ruizhong/entire_project/project_version5/model_training/car-detection--2/valid
+nc: 3
+names: ['car','bus','truck']
+
+
+
