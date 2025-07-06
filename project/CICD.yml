@@ -36,8 +36,21 @@ jobs:
       run: |
         python manage.py test
     
+<<<<<<< HEAD
 
 
 
+=======
+    # 容器化步驟
+    - name : Build and Push Docker Image
+      uses: docker/docker-build-push-action@v4
+      with:
+        image: ruizhong123/project_version5-web:upload
+
+        
+        # 使用 GITHUB 的 Secrets 去儲存 dockerhub 的帳號以及密碼
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+>>>>>>> 9d6292e7309dff7837761f9ee7f32a79958e0b9d
 
     
