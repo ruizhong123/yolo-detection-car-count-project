@@ -31,7 +31,8 @@ on:
     branches: [ "main" ]
 
 env:
-  AWS_REGION: MY_AWS_REGION                   # set this to your preferred AWS region, e.g. us-west-1
+
+  AWS_REGION:                    # set this to your preferred AWS region, e.g. us-west-1
   ECR_REPOSITORY: MY_ECR_REPOSITORY           # set this to your Amazon ECR repository name
   ECS_SERVICE: MY_ECS_SERVICE                 # set this to your Amazon ECS service name
   ECS_CLUSTER: MY_ECS_CLUSTER                 # set this to your Amazon ECS cluster name
@@ -44,25 +45,47 @@ permissions:
   contents: read
 
 jobs:
+
   deploy:
     name: Deploy
     runs-on: ubuntu-latest
     environment: production
 
     steps:
+
     - name: Checkout
       uses: actions/checkout@v4
 
+    # 預設 AWS IAM 使用者的權限不足以存取 ECR 和 ECS，
+    # 因此需要配置 AWS 憑證。
+    # 這些憑證應該存儲在 GitHub Actions 的 secrets 中，
+    # 並且應該是具有適當權限的 IAM 使用者的憑證。
+    # 例如，這個 IAM 使用者應該有
+    # AmazonEC2ContainerRegistryFullAccess 和 AmazonECS_FullAccess 的權限
+    # 以便能夠推送 Docker 映像到 ECR 並
+    # 部署到 ECS。
+    # 你可以在 AWS IAM 控制台中創建一個新的 IAM 使用者，
+    # 並為其分配這些權限，然後將其存儲在 GitHub Actions 的 secrets 中。
+    # 具體的權限可以參考以下文檔：
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v1
+      
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ env.AWS_REGION }}
 
+
+
+    # 登錄到 Amazon ECR，這樣我們就可以推送 Docker 映像到 ECR。
+    # 這個步驟使用了 aws-actions/amazon-ecr-login@v1 GitHub Action，
+    # 它會自動處理 ECR 的登錄過程。
+    # 這個 Action 會使用我們在上一步配置的 AWS
+
     - name: Login to Amazon ECR
       id: login-ecr
       uses: aws-actions/amazon-ecr-login@v1
+
 
     - name: Build, tag, and push image to Amazon ECR
       id: build-image
