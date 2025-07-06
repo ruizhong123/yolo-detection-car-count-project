@@ -31,7 +31,7 @@ jobs:
         python project/manage.py test
 
     - name : pull and run the docker image
-      user: mr-smither-s-excellent/docker-build-push-action@v4
+      uses: mr-smither-s-excellent/docker-build-push@v4
 
       with :
         image: ruizhong123/project_version5-web
