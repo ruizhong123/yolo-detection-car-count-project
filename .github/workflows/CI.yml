@@ -59,16 +59,14 @@ jobs:
           sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
           sudo chmod +x /usr/local/bin/docker-compose
 
-      # Run Docker Compose
-      - name : Run Docker Compose
+      # Create a Docker Compose file
+      - name: Run Docker Compose
         run: |
           docker-compose -f docker-compose.yml up -d
-          sleep 10  # Wait for services to start
-          curl -f http://localhost:443 || exit 1
-
-          # Health check on Nginx port
+          for i in {1..10}; do
+            curl -k -f https://localhost:443 && break || sleep 5
+          done
           docker-compose -f docker-compose.yml logs
-
   
 
 
