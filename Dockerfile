@@ -1,17 +1,17 @@
 # Build stage
 FROM python:3.12-slim AS builder
 
+# create a directionary for the applocation 
 RUN mkdir /app
 WORKDIR /app
 
 # Set environment variables
 # import environment variable 
-
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 
-# Install build dependencies
 
+# Install build dependencies
 RUN apt-get update && apt-get install -y \
     python3-dev \
     libxml2-dev \
@@ -56,8 +56,6 @@ RUN apt-get update && apt-get install -y \
 
 # Create non-root user
 RUN useradd -m appuser && chown -R appuser:appuser /app
-
-
 
 # Copy dependencies from builder
 COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
