@@ -30,7 +30,7 @@ COPY project/requirements.txt .
 
 # Copy SSL certificates
 COPY project/certs/nginx.crt /etc/nginx/ssl/nginx.crt
-COPY project/certs/nginx.key /etc/nginx/ssl/Nginx.key
+COPY project/certs/Nginx.key /etc/nginx/ssl/Nginx.key
 
 RUN pip install --default-timeout=1000 --no-cache-dir -r requirements.txt
 
