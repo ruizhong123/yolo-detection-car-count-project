@@ -63,7 +63,7 @@ COPY --from=builder /usr/local/bin /usr/local/bin
 
 # Copy application code and model
 COPY --chown=appuser:appuser --chmod=755 project/ .
-COPY --chown=appuser:appuser model/yolo12n.pt .
+COPY --chown=appuser:appuser project/yolo12n.pt .
 
 # Switch to non-root user
 USER appuser

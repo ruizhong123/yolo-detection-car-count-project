@@ -1,12 +1,10 @@
 services:
-
   django_web:
     build:
       context: .
       dockerfile: Dockerfile
 
     deploy:
-
       resources:
         limits:
           cpus: "1.8"
