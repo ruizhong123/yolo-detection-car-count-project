@@ -55,7 +55,9 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Create non-root user
-RUN useradd -m appuser && chown -R appuser /app
+RUN useradd -m appuser && chown -R appuser:appuser /app
+
+
 
 # Copy dependencies from builder
 COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
