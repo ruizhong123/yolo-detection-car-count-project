@@ -62,7 +62,7 @@ jobs:
       # Run Docker Compose
       - name : Run Docker Compose
         run: |
-          docker-compose -f docker-compose.yml up -d
+          docker-compose -k docker-compose.yml up -d
           sleep 10  # Wait for services to start
           curl -f http://localhost:443 || exit 1
 
