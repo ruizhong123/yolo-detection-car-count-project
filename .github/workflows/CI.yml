@@ -53,12 +53,19 @@ jobs:
           push: true
           tags: ruizhong123/project_version5-nginx:upload
       
+    # Install Docker Compose
+      - name: Install Docker Compose
+        run: |
+          sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+          sudo chmod +x /usr/local/bin/docker-compose
+
       # Run Docker Compose
       - name : Run Docker Compose
         run: |
           docker-compose -f docker-compose.yml up -d
           sleep 10  # Wait for services to start
           curl -f http://localhost:443 || exit 1
+
           # Health check on Nginx port
           docker-compose -f docker-compose.yml logs
 
